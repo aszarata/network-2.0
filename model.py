@@ -64,7 +64,7 @@ class Model:
 
     def backward(self, y_batch):
         """
-        Performs a single epoch of updating the weights and errors using back propagation.
+        Performs a single epoch of updating the weights and errors using back propagation based on true value.
 
         Args:
             y_batch: A numpy array of real outputs.
@@ -73,9 +73,27 @@ class Model:
         output_layer = self.layers[-1]
 
         delta_tmp = output_layer.calculate_output_delta(outputs)
-        output_layer.update_weights(lr=self.learning_rate)
+
+        if self.is_training:
+            output_layer.update_weights(lr=self.learning_rate)
         
         for layer in reversed(self.layers[:-1]):
+            delta_tmp = layer.calculate_delta(delta_tmp)
+
+            if self.is_training:
+                layer.update_weights(lr=self.learning_rate)
+
+        return delta_tmp
+    
+    def backward_from(self, delta):
+        """
+        Performs a single epoch of updating the weights and errors using back propagation continuing from last delta.
+
+        Args:
+            delta: A numpy array of real outputs.
+        """
+        delta_tmp = delta
+        for layer in reversed(self.layers):
             delta_tmp = layer.calculate_delta(delta_tmp)
 
             if self.is_training:
